@@ -71,7 +71,7 @@ Resources:
       DesiredCapacity: 1
       LaunchTemplate:
         LaunchTemplateId: !Ref ProdLaunchTemplate
-        Version: "2"
+        Version: "3"
       VPCZoneIdentifier:
         - !Ref ProdSubnet
       Tags:
