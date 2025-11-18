@@ -71,13 +71,14 @@ Resources:
       DesiredCapacity: 1
       LaunchTemplate:
         LaunchTemplateId: !Ref ProdLaunchTemplate
-        Version: "3"
+        Version: !GetAtt ProdLaunchTemplate.LatestVersionNumber
       VPCZoneIdentifier:
         - !Ref ProdSubnet
       Tags:
         - Key: Name
           Value: prod-instance
           PropagateAtLaunch: true
+
 
 Outputs:
   VPCId:
