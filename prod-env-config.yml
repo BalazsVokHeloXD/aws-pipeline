@@ -1,0 +1,96 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Production stack with VPC, Subnet, Security Group, Launch Template, and Auto Scaling Group
+
+Resources:
+
+  # VPC
+  ProdVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.20.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: prod-vpc
+
+  # Subnet
+  ProdSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref ProdVPC
+      CidrBlock: 10.20.1.0/24
+      AvailabilityZone: eu-central-1a
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: prod-subnet
+
+  # Security Group
+  ProdSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow HTTP access
+      VpcId: !Ref ProdVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+
+  # Launch Template
+  ProdLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: prod-launch-template
+      LaunchTemplateData:
+        KeyName: dev-key2
+        ImageId: ami-0f78f0f0c76cef16f
+        InstanceType: t3.micro
+        SecurityGroupIds:
+          - !Ref ProdSG
+        UserData:
+          Fn::Base64: |
+            #!/bin/bash
+            yum update -y
+            yum install -y httpd
+            systemctl enable httpd
+            systemctl start httpd
+            echo "<h1>Welcome to PROD</h1>" > /var/www/html/index.html
+
+  # Auto Scaling Group
+  ProdASG:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      MinSize: 1
+      MaxSize: 3
+      DesiredCapacity: 1
+      LaunchTemplate:
+        LaunchTemplateId: !Ref ProdLaunchTemplate
+        Version: "1"
+      VPCZoneIdentifier:
+        - !Ref ProdSubnet
+      Tags:
+        - Key: Name
+          Value: prod-instance
+          PropagateAtLaunch: true
+
+Outputs:
+  VPCId:
+    Description: VPC ID
+    Value: !Ref ProdVPC
+
+  SubnetId:
+    Description: Subnet ID
+    Value: !Ref ProdSubnet
+
+  SecurityGroupId:
+    Description: Security Group ID
+    Value: !Ref ProdSG
+
+  LaunchTemplateId:
+    Description: Launch Template ID
+    Value: !Ref ProdLaunchTemplate
