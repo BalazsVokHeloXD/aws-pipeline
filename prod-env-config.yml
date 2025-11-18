@@ -6,6 +6,7 @@ Resources:
   # VPC
   ProdVPC:
     Type: AWS::EC2::VPC
+    DeletionPolicy: Retain
     Properties:
       CidrBlock: 10.20.0.0/16
       EnableDnsSupport: true
